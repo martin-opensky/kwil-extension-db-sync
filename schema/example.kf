@@ -1,0 +1,22 @@
+database sync_test;
+
+use db_sync as db_sync;
+use unique_id as unique_id;
+
+table messages {
+  id text maxlen(21) primary notnull,
+  message text notnull maxlen(100),
+  wallet text notnull,
+  #wallet_index index(wallet)
+}
+
+action select_messages () public {
+  SELECT * FROM messages;
+}
+
+action insert_message ($message) public {
+  $id = unique_id.generate();
+
+  INSERT INTO messages
+  VALUES ($id, $message, 'simple');
+}

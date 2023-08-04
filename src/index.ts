@@ -24,14 +24,12 @@ type Export = {
 const initialize: InitializeFn = async (
   metadata: Record<string, string>
 ): Promise<Record<string, string>> => {
-  // set node and currency
-  if (!metadata['node']) {
-    metadata['node'] = 'http://node2.bundlr.network';
+  // set original_dbid if this server is started after original schema was created
+  if (!metadata['original_dbid']) {
+    metadata['original_dbid'] = '';
   }
 
-  if (!metadata['currency']) {
-    metadata['currency'] = 'matic';
-  }
+  throw new Error('No dbid provided');
 
   return metadata;
 };
@@ -157,13 +155,13 @@ const start: MethodFn = async ({ metadata, inputs }) => {
 
 function startServer(): void {
   const server = new ExtensionBuilder()
-    .named('db_export')
+    .named('db_sync')
     .withInitializer(initialize)
     .withMethods({
       start,
     })
     .withLoggerFn(logger)
-    .port('50052')
+    .port('50053')
     .build();
 
   console.log('Starting server...');
