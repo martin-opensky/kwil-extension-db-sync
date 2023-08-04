@@ -1,0 +1,5 @@
+.env
+node_modules
+# Dist files included now as their is a TS build error due to Bundlr package
+#dist
+logs.txt

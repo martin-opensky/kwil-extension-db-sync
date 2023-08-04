@@ -1,0 +1,69 @@
+database user_posts;
+
+use db_export{
+  node: 'http://node2.bundlr.network',
+  currency: 'matic'
+} as db_export;
+
+use unique_id as unique_id;
+
+table users {
+  id text maxlen(21) primary notnull,
+  username text notnull maxlen(100),
+  wallet text notnull,
+  #wallet_index unique(wallet),
+  #unique_username unique(username)
+}
+
+table posts {
+  id text maxlen(21) primary notnull,
+  content text notnull maxlen(100),
+  user_id text maxlen(21) notnull,
+  #user_index index(user_id)
+}
+
+action create_account ($username) public {
+  $id = unique_id.generate();
+
+  INSERT INTO users
+  VALUES ($id, $username, @caller);
+}
+
+action create_post ($content) public {
+  SELECT
+        CASE
+            WHEN count(*) = 0 THEN ERROR('You must create an account first')
+            ELSE null
+        END
+  FROM users 
+  WHERE wallet = @caller;
+
+  $id = unique_id.generate();
+
+  INSERT INTO posts
+  VALUES ($id, $content, (SELECT id FROM users WHERE wallet = @caller));
+}
+
+action select_all_posts () public {
+  SELECT * FROM posts;
+}
+
+action select_users () public {
+  SELECT * FROM users;
+}
+
+action my_posts () public {
+  SELECT * FROM posts WHERE user_id = (SELECT user_id FROM users WHERE wallet = @caller);
+}
+
+action user_posts ($username) public {
+  SELECT * FROM posts WHERE user_id = (SELECT user_id FROM users WHERE username = $username);
+}
+
+// Export DB Action
+action start_export () private {
+  $tx_id = db_export.start(@dataset);
+
+  SELECT $tx_id;
+}
+
