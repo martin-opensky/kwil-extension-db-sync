@@ -23,5 +23,5 @@ COPY dist /app/dist
 EXPOSE 50052
 
 # Command to run the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "dist/index.mjs"]
 
