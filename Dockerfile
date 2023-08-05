@@ -20,7 +20,7 @@ COPY . .
 COPY dist /app/dist
 
 # Expose port
-EXPOSE 50052
+EXPOSE 40053 50053 60053
 
 # Command to run the application
 CMD ["node", "dist/index.mjs"]

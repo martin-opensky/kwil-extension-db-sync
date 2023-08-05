@@ -23,7 +23,7 @@ type ActionToSync = {
   data: ActionData[];
 };
 
-const signer: Signer = new Wallet(process.env.KWILD_PRIVATE_KEY as string);
+const signer: Signer = new Wallet(process.env.ADMIN_PRIVATE_KEY as string);
 
 const initialize: InitializeFn = async (
   metadata: Record<string, string>
@@ -35,8 +35,12 @@ const initialize: InitializeFn = async (
     throw new Error('local_db_name needs to be set in db_sync metadata');
   }
 
-  if (!process.env.KWILD_PRIVATE_KEY) {
-    throw new Error('KWILD_PRIVATE_KEY not found in ENV file');
+  if (!process.env.ADMIN_PRIVATE_KEY) {
+    throw new Error('ADMIN_PRIVATE_KEY not found in ENV file');
+  }
+
+  if (!process.env.KWIL_PROVIDER_URL) {
+    throw new Error('KWIL_PROVIDER_URL not found in ENV file');
   }
 
   if (!process.env.BUNDLR_NODE_URL) {
@@ -106,7 +110,7 @@ const save_action: MethodFn = async ({ metadata, inputs }) => {
 
   // get schema using localDbId
   const kwil = new NodeKwil({
-    kwilProvider: 'http://kwil:8080',
+    kwilProvider: process.env.KWIL_PROVIDER_URL as string,
   });
   const schema = await kwil.getSchema(localDbId);
 
@@ -159,7 +163,7 @@ const saveActionToBundlr = async (
   const bundlr = new Bundlr(
     process.env.BUNDLR_NODE_URL as string,
     process.env.BUNDLR_NODE_CURRENCY as string,
-    process.env.KWILD_PRIVATE_KEY as string
+    process.env.ADMIN_PRIVATE_KEY as string
   );
 
   const actionId = nanoid();
@@ -193,6 +197,8 @@ const saveActionToBundlr = async (
 };
 
 function startServer(): void {
+  const port = process.env.EXTENSION_DB_SYNC_PORT || '50053';
+
   const server = new ExtensionBuilder()
     .named('db_sync')
     .withInitializer(initialize)
@@ -200,7 +206,7 @@ function startServer(): void {
       save_action,
     })
     .withLoggerFn(logger)
-    .port('50053')
+    .port(port)
     .build();
 
   console.log('Starting server...');

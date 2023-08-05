@@ -14,15 +14,18 @@ import Bundlr from '@bundlr-network/client';
 import { nanoid } from 'nanoid';
 import { Wallet } from 'ethers';
 import dbSyncClient from './db-sync-client.mjs';
-const signer = new Wallet(process.env.KWILD_PRIVATE_KEY);
+const signer = new Wallet(process.env.ADMIN_PRIVATE_KEY);
 const initialize = (metadata) => __awaiter(void 0, void 0, void 0, function* () {
     console.log('METADATA:', metadata);
     // metadata['original_dbid'] needs to be set if this server is started after original db was created
     if (!metadata['local_db_name']) {
         throw new Error('local_db_name needs to be set in db_sync metadata');
     }
-    if (!process.env.KWILD_PRIVATE_KEY) {
-        throw new Error('KWILD_PRIVATE_KEY not found in ENV file');
+    if (!process.env.ADMIN_PRIVATE_KEY) {
+        throw new Error('ADMIN_PRIVATE_KEY not found in ENV file');
+    }
+    if (!process.env.KWIL_PROVIDER_URL) {
+        throw new Error('KWIL_PROVIDER_URL not found in ENV file');
     }
     if (!process.env.BUNDLR_NODE_URL) {
         throw new Error('BUNDLR_NODE_URL not found in ENV file');
@@ -68,7 +71,7 @@ const save_action = ({ metadata, inputs }) => __awaiter(void 0, void 0, void 0, 
     inputs.shift();
     // get schema using localDbId
     const kwil = new NodeKwil({
-        kwilProvider: 'http://kwil:8080',
+        kwilProvider: process.env.KWIL_PROVIDER_URL,
     });
     const schema = yield kwil.getSchema(localDbId);
     if (!schema.data) {
@@ -103,7 +106,7 @@ const saveActionToBundlr = (metadata, actionToSync) => __awaiter(void 0, void 0,
     console.log('Saving Action => ');
     console.log('BUNDLR_NODE_URL => ', process.env.BUNDLR_NODE_URL);
     console.log('BUNDLR_NODE_CURRENCY => ', process.env.BUNDLR_NODE_CURRENCY);
-    const bundlr = new Bundlr(process.env.BUNDLR_NODE_URL, process.env.BUNDLR_NODE_CURRENCY, process.env.KWILD_PRIVATE_KEY);
+    const bundlr = new Bundlr(process.env.BUNDLR_NODE_URL, process.env.BUNDLR_NODE_CURRENCY, process.env.ADMIN_PRIVATE_KEY);
     const actionId = nanoid();
     const signature = yield signer.signMessage(actionId);
     const tags = [
@@ -128,6 +131,7 @@ const saveActionToBundlr = (metadata, actionToSync) => __awaiter(void 0, void 0,
     return response.id;
 });
 function startServer() {
+    const port = process.env.EXTENSION_DB_SYNC_PORT || '50053';
     const server = new ExtensionBuilder()
         .named('db_sync')
         .withInitializer(initialize)
@@ -135,7 +139,7 @@ function startServer() {
         save_action,
     })
         .withLoggerFn(logger)
-        .port('50053')
+        .port(port)
         .build();
     console.log('Starting server...');
     process.on('SIGINT', () => {

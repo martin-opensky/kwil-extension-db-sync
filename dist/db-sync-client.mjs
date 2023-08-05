@@ -10,6 +10,9 @@ const packageDefinition = loadSync(protoPath, {
     oneofs: true,
 });
 const DbSyncService = grpc.loadPackageDefinition(packageDefinition).DbSyncService;
+if (!process.env.DB_SYNC_GRPC_URL) {
+    throw new Error('DB_SYNC_GRPC_URL not found in ENV file');
+}
 // @ts-ignore
-const dbSyncClient = new DbSyncService('dns:///kwil-db-sync:50061', grpc.credentials.createInsecure());
+const dbSyncClient = new DbSyncService(process.env.DB_SYNC_GRPC_URL, grpc.credentials.createInsecure());
 export default dbSyncClient;
