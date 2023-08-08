@@ -159,6 +159,6 @@ export default class DbSync {
     console.log(`Data Available at => https://arweave.net/${response.id}`);
     console.log(`Timestamp ${response.timestamp}`);
 
-    return response.id;
+    return `https://arweave.net/${response.id}`;
   }
 }
